@@ -11,12 +11,14 @@ class HelloWorld : public cocos2d::Layer
 private:
 	enum Mode
 	{
-		LineCreate,
+		Line,
 		LostHole,
 		GaolHole
 	};
 
 	Mode nowMode;
+
+	std::vector<Mode> modeList;
 
 	std::string writablePath;
 
@@ -44,6 +46,10 @@ private:
 
 	cocos2d::Vec2 goalPos;
 
+	int clickCount;
+
+	std::vector<int> clickArray;
+
 public:
 	HelloWorld();
 	virtual ~HelloWorld();
@@ -57,6 +63,9 @@ public:
 private:
 	//Lineを描画
 	void DrawRails();
+
+	//Zキーを押されたとき
+	void Cancel(Mode mode_);
 
 	//ModeがLineCreate時に左クリックされた場合
 	void LineCreateMouseLeft(cocos2d::Vec2 pos);

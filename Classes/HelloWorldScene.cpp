@@ -6,8 +6,6 @@
 #include "json/filewritestream.h"
 #include "json/prettywriter.h"
 
-#include "ModalLayer.h"
-
 USING_NS_CC;
 
 HelloWorld::HelloWorld()
@@ -15,6 +13,7 @@ HelloWorld::HelloWorld()
 	, railDrawSize(0)
 	, holeSize(30.0f, 30.0f)
 	,goalPos(0.0f, 0.0f)
+	,clickCount(0)
 {
 	mouseListener = EventListenerMouse::create();
 	mouseListener->onMouseUp = CC_CALLBACK_1(HelloWorld::onMouseUp, this);
@@ -51,7 +50,7 @@ bool HelloWorld::init()
 
 	auto visibleSize = Director::getInstance()->getVisibleSize();
 
-	nowMode = Mode::LineCreate;
+	nowMode = Mode::Line;
 
 	writablePath = FileUtils::getInstance()->getWritablePath();
 	log(u8"path‚Í%s", writablePath.c_str());
@@ -121,8 +120,44 @@ void HelloWorld::DrawRails()
 {
 	DrawNode* rails = DrawNode::create();
 	rails->drawSegment(railDraw[railDrawSize - 2].first, railDraw[railDrawSize - 1].first, 2.0f, Color4F::WHITE);
-	rails->setTag(railDrawSize);
+	rails->setName(StringUtils::format("rails%i", railDrawSize));
 	this->addChild(rails);
+}
+
+void HelloWorld::Cancel(Mode mode_)
+{
+	switch (mode_)
+	{
+	case Mode::Line:
+		for (int i = 0; i < clickArray.back(); i++)
+		{
+			railData.pop_back();
+		}
+
+		for (int i = 0; i < clickArray.back() - 1; i++)
+		{
+			this->removeChildByName(StringUtils::format("rails%i", (int)railDraw.size()));
+			railDraw.pop_back();
+			railDraw.pop_back();
+		}
+
+		clickArray.pop_back();
+
+		railDrawSize = (int)railDraw.size();
+		break;
+	case Mode::LostHole:
+		this->removeChildByName(StringUtils::format("lostHole%i", (int)lostHolePos.size()));
+		lostHolePos.pop_back();
+		break;
+	case Mode::GaolHole:
+		this->removeChildByName("gaolHole");
+		break;
+	default:
+		break;
+	}
+
+	modeList.pop_back();
+
 }
 
 void HelloWorld::LineCreateMouseLeft(cocos2d::Vec2 pos)
@@ -132,6 +167,8 @@ void HelloWorld::LineCreateMouseLeft(cocos2d::Vec2 pos)
 		railDraw.push_back(std::make_pair(Vec2(pos), 0));
 		railData.push_back(std::make_pair(Vec2(pos), 0));
 		railDrawSize = (int)railDraw.size();
+		clickCount += 1;
+		modeList.push_back(nowMode);
 		clicked = true;
 	}
 	else
@@ -141,6 +178,9 @@ void HelloWorld::LineCreateMouseLeft(cocos2d::Vec2 pos)
 		railDrawSize = (int)railDraw.size();
 		this->DrawRails();
 		drawNode->clear();
+		clickCount += 1;
+		clickArray.push_back(clickCount);
+		clickCount = 0;
 		clicked = false;
 	}
 }
@@ -158,6 +198,7 @@ void HelloWorld::LineCreateMouseRight(cocos2d::Vec2 pos)
 	drawNode->clear();
 	railDraw.push_back(std::make_pair(Vec2(pos), 0));
 	railData.push_back(std::make_pair(Vec2(pos), 0));
+	clickCount += 1;
 }
 
 void HelloWorld::HoleCreate(cocos2d::Vec2 pos, cocos2d::Color4F cirlceColor)
@@ -166,21 +207,22 @@ void HelloWorld::HoleCreate(cocos2d::Vec2 pos, cocos2d::Color4F cirlceColor)
 	holeCirlce->drawDot(pos, holeSize.width * 0.5f, cirlceColor);
 	this->addChild(holeCirlce);
 
-	pos.x = floorf(pos.x);
-	pos.y = floorf(pos.y);
+	pos.x = floorf(pos.x) - (holeSize.width * 0.5f);
+	pos.y = floorf(pos.y) - (holeSize.height * 0.5f);
 
 	switch (nowMode)
 	{
 	case Mode::LostHole:
 		lostHolePos.push_back(pos);
+		holeCirlce->setName(StringUtils::format("lostHole%i", (int)lostHolePos.size()));
 		break;
 	case Mode::GaolHole:
-		if (this->getChildByTag(0))
+		if (this->getChildByName("gaolHole"))
 		{
-			this->removeChildByTag(0);
+			this->removeChildByName("gaolHole");
 		}
+		holeCirlce->setName("gaolHole");
 		goalPos = pos;
-		holeCirlce->setTag(0);
 		break;
 	default:
 		break;
@@ -276,6 +318,7 @@ void HelloWorld::onMouseDown(cocos2d::Event* event)
 	}
 
 	Vec2 minMaxPos = Vec2(0.0f, 0.0f);
+
 	if (60.0f >= e->getCursorX())
 	{
 		minMaxPos.x = 60.0f;
@@ -306,16 +349,18 @@ void HelloWorld::onMouseDown(cocos2d::Event* event)
 	{
 		switch (nowMode)
 		{
-		case Mode::LineCreate:
+		case Mode::Line:
 			this->LineCreateMouseLeft(minMaxPos);
 			break;
 
 		case Mode::LostHole:
 			this->HoleCreate(minMaxPos, Color4F::WHITE);
+			modeList.push_back(nowMode);
 			break;
 
 		case Mode::GaolHole:
 			this->HoleCreate(minMaxPos, Color4F::RED);
+			modeList.push_back(nowMode);
 			break;
 
 		default:
@@ -334,7 +379,7 @@ void HelloWorld::onMouseMove(cocos2d::Event* event)
 
 	switch (nowMode)
 	{
-	case Mode::LineCreate:
+	case Mode::Line:
 		if (clicked)
 		{
 			drawNode->clear();
@@ -381,7 +426,10 @@ void HelloWorld::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::
 
 		break;
 	case EventKeyboard::KeyCode::KEY_Z:
-
+		if (modeList.size() != 0)
+		{
+			this->Cancel(modeList.back());
+		}		
 
 		break;
 	default:
@@ -391,8 +439,7 @@ void HelloWorld::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::
 
 void HelloWorld::HelpButtonEvent(cocos2d::Ref * sender, cocos2d::ui::Widget::TouchEventType type)
 {
-	auto modal = ModalLayer::create();
-	this->addChild(modal);
+	
 }
 
 void HelloWorld::ChangeButtonEvent(cocos2d::Ref * sender, cocos2d::ui::Widget::TouchEventType type)
@@ -406,7 +453,7 @@ void HelloWorld::ChangeButtonEvent(cocos2d::Ref * sender, cocos2d::ui::Widget::T
 	{
 		switch (nowMode)
 		{
-		case Mode::LineCreate:
+		case Mode::Line:
 			changeButton->setTitleText("LostHoleCreate");
 			nowMode = Mode::LostHole;
 			break;
@@ -418,7 +465,7 @@ void HelloWorld::ChangeButtonEvent(cocos2d::Ref * sender, cocos2d::ui::Widget::T
 
 		case Mode::GaolHole:
 			changeButton->setTitleText("LineCreate");
-			nowMode = Mode::LineCreate;
+			nowMode = Mode::Line;
 			drawNode->clear();
 			break;
 		default:
