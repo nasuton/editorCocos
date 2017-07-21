@@ -220,6 +220,7 @@ void HelloWorld::HoleCreate(cocos2d::Vec2 pos, cocos2d::Color4F cirlceColor)
 		if (this->getChildByName("gaolHole"))
 		{
 			this->removeChildByName("gaolHole");
+			modeList.pop_back();
 		}
 		holeCirlce->setName("gaolHole");
 		goalPos = pos;
@@ -354,7 +355,7 @@ void HelloWorld::onMouseDown(cocos2d::Event* event)
 			break;
 
 		case Mode::LostHole:
-			this->HoleCreate(minMaxPos, Color4F::WHITE);
+			this->HoleCreate(minMaxPos, Color4F::YELLOW);
 			modeList.push_back(nowMode);
 			break;
 
