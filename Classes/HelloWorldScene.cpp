@@ -14,6 +14,8 @@ HelloWorld::HelloWorld()
 	, holeSize(30.0f, 30.0f)
 	,goalPos(0.0f, 0.0f)
 	,clickCount(0)
+	,leverPosY(0.0f)
+	,areaPos(0.0f)
 {
 	mouseListener = EventListenerMouse::create();
 	mouseListener->onMouseUp = CC_CALLBACK_1(HelloWorld::onMouseUp, this);
@@ -49,6 +51,10 @@ bool HelloWorld::init()
 	}
 
 	auto visibleSize = Director::getInstance()->getVisibleSize();
+
+	Sprite* backGroundSprite = Sprite::create("backGround.png");
+	backGroundSprite->setPosition(Vec2(visibleSize.width * 0.5f, visibleSize.height * 0.5f));
+	this->addChild(backGroundSprite);
 
 	nowMode = Mode::Line;
 
@@ -113,6 +119,16 @@ bool HelloWorld::init()
 	drawNode = DrawNode::create();
 	this->addChild(drawNode);
 
+	leverBackSprite = Sprite::create("lever_background.png");
+	leverBackSprite->setAnchorPoint(Vec2(0.5f, 0.28f));
+	leverBackSprite->setVisible(false);
+	this->addChild(leverBackSprite);
+
+	leverSprite = Sprite::create("lever.png");
+	leverSprite->setAnchorPoint(Vec2(0.5f, 0.28f));
+	leverSprite->setVisible(false);
+	this->addChild(leverSprite);
+
 	return true;
 }
 
@@ -145,13 +161,34 @@ void HelloWorld::Cancel(Mode mode_)
 
 		railDrawSize = (int)railDraw.size();
 		break;
+
 	case Mode::LostHole:
 		this->removeChildByName(StringUtils::format("lostHole%i", (int)lostHolePos.size()));
 		lostHolePos.pop_back();
 		break;
+
 	case Mode::GaolHole:
 		this->removeChildByName("gaolHole");
 		break;
+
+	case Mode::LeftLever:
+		this->removeChildByName(StringUtils::format("leftLeverBack%i", (int)leftLeverPos.size()));
+		this->removeChildByName(StringUtils::format("leftLever%i", (int)leftLeverPos.size()));
+		leftLeverPos.pop_back();
+		
+		this->removeChildByName(StringUtils::format("leftArea%i", (int)leftAreaPos.size()));
+		leftAreaPos.pop_back();
+		break;
+
+	case Mode::RightLever:
+		this->removeChildByName(StringUtils::format("rightLeverBack%i", (int)rightLeverPos.size()));
+		this->removeChildByName(StringUtils::format("rightLever%i", (int)rightLeverPos.size()));
+		rightLeverPos.pop_back();
+
+		this->removeChildByName(StringUtils::format("rightArea%i", (int)rightAreaPos.size()));
+		rightAreaPos.pop_back();
+		break;
+
 	default:
 		break;
 	}
@@ -160,12 +197,51 @@ void HelloWorld::Cancel(Mode mode_)
 
 }
 
-void HelloWorld::LineCreateMouseLeft(cocos2d::Vec2 pos)
+void HelloWorld::LineCreateMouseLeft(float cursorX, float cursorY)
 {
+
+	if (50.0f >= cursorX || cursorX >= 310.0f)
+	{
+		return;
+	}
+
+	if (50.0f >= cursorY || cursorY >= 610.0f)
+	{
+		return;
+	}
+
+	Vec2 minMaxPos = Vec2(0.0f, 0.0f);
+
+	if (60.0f >= cursorX)
+	{
+		minMaxPos.x = 60.0f;
+	}
+	else if (cursorX >= 300.0f)
+	{
+		minMaxPos.x = 300.0f;
+	}
+	else
+	{
+		minMaxPos.x = cursorX;
+	}
+
+	if (60.0f >= cursorY)
+	{
+		minMaxPos.y = 60.0f;
+	}
+	else if (cursorY >= 600.0f)
+	{
+		minMaxPos.y = 600.0f;
+	}
+	else
+	{
+		minMaxPos.y = cursorY;
+	}
+
 	if (!clicked)
 	{
-		railDraw.push_back(std::make_pair(Vec2(pos), 0));
-		railData.push_back(std::make_pair(Vec2(pos), 0));
+		railDraw.push_back(std::make_pair(Vec2(minMaxPos), 0));
+		railData.push_back(std::make_pair(Vec2(minMaxPos), 0));
 		railDrawSize = (int)railDraw.size();
 		clickCount += 1;
 		modeList.push_back(nowMode);
@@ -173,8 +249,8 @@ void HelloWorld::LineCreateMouseLeft(cocos2d::Vec2 pos)
 	}
 	else
 	{
-		railDraw.push_back(std::make_pair(Vec2(pos), 1));
-		railData.push_back(std::make_pair(Vec2(pos), 1));
+		railDraw.push_back(std::make_pair(Vec2(minMaxPos), 1));
+		railData.push_back(std::make_pair(Vec2(minMaxPos), 1));
 		railDrawSize = (int)railDraw.size();
 		this->DrawRails();
 		drawNode->clear();
@@ -185,35 +261,111 @@ void HelloWorld::LineCreateMouseLeft(cocos2d::Vec2 pos)
 	}
 }
 
-void HelloWorld::LineCreateMouseRight(cocos2d::Vec2 pos)
+void HelloWorld::LineCreateMouseRight(float cursorX, float cursorY)
 {
 	if (!clicked)
 	{
 		return;
 	}
 
-	railDraw.push_back(std::make_pair(Vec2(pos), 1));
+	if (50.0f >= cursorX || cursorX >= 310.0f)
+	{
+		return;
+	}
+
+	if (50.0f >= cursorY || cursorY >= 610.0f)
+	{
+		return;
+	}
+
+	Vec2 minMaxPos = Vec2(0.0f, 0.0f);
+
+	if (60.0f >= cursorX)
+	{
+		minMaxPos.x = 60.0f;
+	}
+	else if (cursorX >= 300.0f)
+	{
+		minMaxPos.x = 300.0f;
+	}
+	else
+	{
+		minMaxPos.x = cursorX;
+	}
+
+	if (60.0f >= cursorY)
+	{
+		minMaxPos.y = 60.0f;
+	}
+	else if (cursorY >= 600.0f)
+	{
+		minMaxPos.y = 600.0f;
+	}
+	else
+	{
+		minMaxPos.y = cursorY;
+	}
+
+	railDraw.push_back(std::make_pair(Vec2(minMaxPos), 1));
 	railDrawSize = (int)railDraw.size();
 	this->DrawRails();
 	drawNode->clear();
-	railDraw.push_back(std::make_pair(Vec2(pos), 0));
-	railData.push_back(std::make_pair(Vec2(pos), 0));
+	railDraw.push_back(std::make_pair(Vec2(minMaxPos), 0));
+	railData.push_back(std::make_pair(Vec2(minMaxPos), 0));
 	clickCount += 1;
 }
 
-void HelloWorld::HoleCreate(cocos2d::Vec2 pos, cocos2d::Color4F cirlceColor)
+void HelloWorld::HoleCreate(float cursorX, float cursorY, cocos2d::Color4F cirlceColor)
 {
+	if (50.0f >= cursorX || cursorX >= 310.0f)
+	{
+		return;
+	}
+
+	if (50.0f >= cursorY || cursorY >= 610.0f)
+	{
+		return;
+	}
+
+	Vec2 minMaxPos = Vec2(0.0f, 0.0f);
+
+	if (60.0f >= cursorX)
+	{
+		minMaxPos.x = 60.0f;
+	}
+	else if (cursorX >= 300.0f)
+	{
+		minMaxPos.x = 300.0f;
+	}
+	else
+	{
+		minMaxPos.x = cursorX;
+	}
+
+	if (60.0f >= cursorY)
+	{
+		minMaxPos.y = 60.0f;
+	}
+	else if (cursorY >= 600.0f)
+	{
+		minMaxPos.y = 600.0f;
+	}
+	else
+	{
+		minMaxPos.y = cursorY;
+	}
+
 	auto holeCirlce = DrawNode::create();
-	holeCirlce->drawDot(pos, holeSize.width * 0.5f, cirlceColor);
+	holeCirlce->drawDot(minMaxPos, holeSize.width * 0.5f, cirlceColor);
 	this->addChild(holeCirlce);
 
-	pos.x = floorf(pos.x) - (holeSize.width * 0.5f);
-	pos.y = floorf(pos.y) - (holeSize.height * 0.5f);
+	minMaxPos.x = floorf(minMaxPos.x) - (holeSize.width * 0.5f);
+	minMaxPos.y = floorf(minMaxPos.y) - (holeSize.height * 0.5f);
 
 	switch (nowMode)
 	{
 	case Mode::LostHole:
-		lostHolePos.push_back(pos);
+		lostHolePos.push_back(minMaxPos);
 		holeCirlce->setName(StringUtils::format("lostHole%i", (int)lostHolePos.size()));
 		break;
 	case Mode::GaolHole:
@@ -223,11 +375,183 @@ void HelloWorld::HoleCreate(cocos2d::Vec2 pos, cocos2d::Color4F cirlceColor)
 			modeList.pop_back();
 		}
 		holeCirlce->setName("gaolHole");
-		goalPos = pos;
+		goalPos = minMaxPos;
 		break;
 	default:
 		break;
 	}
+
+	modeList.push_back(nowMode);
+
+}
+
+void HelloWorld::LeftLeverCreate(float cursorX, float cursorY)
+{
+	if (cursorY >= 610.0f || 50.0f >= cursorY)
+	{
+		return;
+	}
+
+	if (!clicked)
+	{
+		leftLeverPos.push_back(Vec2(45.0f, floorf(leverPosY)));
+
+		auto leftLeverBack = Sprite::create("lever_background.png");
+		leftLeverBack->setPosition(Vec2(45.0f, leverPosY));
+		leftLeverBack->setAnchorPoint(Vec2(0.5f, 0.28f));
+		leftLeverBack->setName(StringUtils::format("leftLeverBack%i", (int)leftLeverPos.size()));
+		this->addChild(leftLeverBack, 2);
+
+		auto leftLever = Sprite::create("lever.png");
+		leftLever->setPosition(Vec2(45.0f, leverPosY));
+		leftLever->setAnchorPoint(Vec2(0.5f, 0.28f));
+		leftLever->setName(StringUtils::format("leftLever%i", (int)leftLeverPos.size()));
+		this->addChild(leftLever, 2);
+
+		modeList.push_back(nowMode);
+
+		clicked = true;
+	}
+	else if (clicked)
+	{
+		leftAreaPos.push_back(Vec2(45.0f, floorf(areaPos - 15.0f)));
+
+		auto areaRect = DrawNode::create();
+		areaRect->drawSolidRect(Vec2(45.0f, areaPos - 15.0f), Vec2(75.0f, areaPos + 15.0f), Color4F::MAGENTA);
+		areaRect->setName(StringUtils::format("leftArea%i", (int)leftAreaPos.size()));
+		this->addChild(areaRect, 1);
+
+		drawNode->clear();
+
+		clicked = false;
+	}
+}
+
+void HelloWorld::LeftLeverMove(float cursorY)
+{
+	if (!clicked)
+	{
+		if (cursorY >= 555.0f)
+		{
+			leverPosY = 555.0f;
+		}
+		else if (75.0f >= cursorY)
+		{
+			leverPosY = 75.0f;
+		}
+		else
+		{
+			leverPosY = cursorY;
+		}
+
+		leverBackSprite->setPosition(Vec2(45.0f, leverPosY));
+		leverSprite->setPosition(Vec2(45.0f, leverPosY));
+	}
+	else if (clicked)
+	{
+		if (leverPosY - 10.0f >= cursorY)
+		{
+			areaPos = leverPosY - 10.0f;
+		}
+		else if (cursorY >= leverPosY + 10.0f)
+		{
+			areaPos = leverPosY + 10.0f;
+		}
+		else
+		{
+			areaPos = cursorY;
+		}
+
+		drawNode->clear();
+		drawNode->drawSolidRect(Vec2(45.0f, areaPos - 15.0f), Vec2(75.0f, areaPos + 15.0f), Color4F::MAGENTA);
+	}
+
+	
+}
+
+void HelloWorld::RightLeverCreate(float cursorX, float cursorY)
+{
+	if (cursorY >= 610.0f || 50.0f >= cursorY)
+	{
+		return;
+	}
+
+	if (!clicked)
+	{
+		rightLeverPos.push_back(Vec2(315.0f, floorf(leverPosY)));
+
+		auto rightLeverBack = Sprite::create("lever_background.png");
+		rightLeverBack->setPosition(Vec2(315.0f, leverPosY));
+		rightLeverBack->setAnchorPoint(Vec2(0.5f, 0.28f));
+		rightLeverBack->setName(StringUtils::format("rightLeverBack%i", (int)rightLeverPos.size()));
+		this->addChild(rightLeverBack, 2);
+
+		auto rightLever = Sprite::create("lever.png");
+		rightLever->setPosition(Vec2(315.0f, leverPosY));
+		rightLever->setAnchorPoint(Vec2(0.5f, 0.28f));
+		rightLever->setName(StringUtils::format("rightLever%i", (int)rightLeverPos.size()));
+		this->addChild(rightLever, 2);
+
+		modeList.push_back(nowMode);
+
+		clicked = true;
+	}
+	else if (clicked)
+	{
+		rightAreaPos.push_back(Vec2(285.0f, floorf(areaPos - 15.0f)));
+
+		auto areaRect = DrawNode::create();
+		areaRect->drawSolidRect(Vec2(285.0f, areaPos - 15.0f), Vec2(315.0f, areaPos + 15.0f), Color4F::MAGENTA);
+		areaRect->setName(StringUtils::format("rightArea%i", (int)rightAreaPos.size()));
+		this->addChild(areaRect, 1);
+
+		drawNode->clear();
+
+		clicked = false;
+	}
+	
+}
+
+void HelloWorld::RightLeverMove(float cursorY)
+{
+	
+	if (!clicked)
+	{
+		if (cursorY >= 555.0f)
+		{
+			leverPosY = 555.0f;
+		}
+		else if (75.0f >= cursorY)
+		{
+			leverPosY = 75.0f;
+		}
+		else
+		{
+			leverPosY = cursorY;
+		}
+
+		leverBackSprite->setPosition(Vec2(315.0f, leverPosY));
+		leverSprite->setPosition(Vec2(315.0f, leverPosY));
+	}
+	else if (clicked)
+	{
+		if (leverPosY - 10.0f >= cursorY)
+		{
+			areaPos = leverPosY - 10.0f;
+		}
+		else if (cursorY >= leverPosY + 10.0f)
+		{
+			areaPos = leverPosY + 10.0f;
+		}
+		else
+		{
+			areaPos = cursorY;
+		}
+
+		drawNode->clear();
+		drawNode->drawSolidRect(Vec2(285.0f, areaPos - 15.0f), Vec2(315.0f, areaPos + 15.0f), Color4F::MAGENTA);
+	}
+	
 }
 
 void HelloWorld::CreateRailDrawCSV(std::string filePath, keeporder drawData)
@@ -254,23 +578,28 @@ void HelloWorld::CreateStageJson(std::string filePath)
 	rapidjson::Document document;
 	document.SetObject();
 	rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
-	rapidjson::Value jsonArray(rapidjson::kArrayType);
-	// 要素生成
-	for (int i = 0; i < lostHolePos.size(); i++) {
-		rapidjson::Value pos(rapidjson::kObjectType);
-		pos.AddMember("x", lostHolePos[i].x, allocator);
-		pos.AddMember("y", lostHolePos[i].y, allocator);
-		rapidjson::Value size(rapidjson::kObjectType);
-		size.AddMember("width", holeSize.width, allocator);
-		size.AddMember("height", holeSize.height, allocator);
-		rapidjson::Value block(rapidjson::kObjectType);
-		block.AddMember("position", pos, allocator);
-		block.AddMember("size", size, allocator);
-		//配列に追加
-		jsonArray.PushBack(block, allocator);
+
+	if (lostHolePos.size() != 0)
+	{
+		rapidjson::Value jsonArray(rapidjson::kArrayType);
+		// 要素生成
+		for (int i = 0; i < lostHolePos.size(); i++) {
+			rapidjson::Value pos(rapidjson::kObjectType);
+			pos.AddMember("x", lostHolePos[i].x, allocator);
+			pos.AddMember("y", lostHolePos[i].y, allocator);
+			rapidjson::Value size(rapidjson::kObjectType);
+			size.AddMember("width", holeSize.width, allocator);
+			size.AddMember("height", holeSize.height, allocator);
+			rapidjson::Value block(rapidjson::kObjectType);
+			block.AddMember("position", pos, allocator);
+			block.AddMember("size", size, allocator);
+			//配列に追加
+			jsonArray.PushBack(block, allocator);
+		}
+
+		// JSON配列追加
+		document.AddMember("lostHole", jsonArray, allocator);
 	}
-	// JSON配列追加
-	document.AddMember("lostHole", jsonArray, allocator);
 
 	//ゴール作成
 	rapidjson::Value goalHolePos(rapidjson::kObjectType);
@@ -286,6 +615,76 @@ void HelloWorld::CreateStageJson(std::string filePath)
 	goalHole.AddMember("size", goalHoleSize, allocator);
 
 	document.AddMember("goalHole", goalHole, allocator);
+
+	//左レバー作成
+	if (leftLeverPos.size() != 0 && leftAreaPos.size() != 0)
+	{
+		rapidjson::Value leftLeverArray(rapidjson::kArrayType);
+		for (int i = 0; i < leftLeverPos.size(); i++)
+		{
+			rapidjson::Value leverPos(rapidjson::kObjectType);
+			leverPos.AddMember("x", leftLeverPos[i].x, allocator);
+			leverPos.AddMember("y", leftLeverPos[i].y, allocator);
+
+			rapidjson::Value areaPos(rapidjson::kObjectType);
+			areaPos.AddMember("x", leftAreaPos[i].x, allocator);
+			areaPos.AddMember("y", leftAreaPos[i].y, allocator);
+
+			rapidjson::Value areaSize(rapidjson::kObjectType);
+			areaSize.AddMember("width", 30.0f, allocator);
+			areaSize.AddMember("height", 30.0f, allocator);
+
+			rapidjson::Value area(rapidjson::kObjectType);
+			area.AddMember("position", areaPos, allocator);
+			area.AddMember("size", areaSize, allocator);
+
+			rapidjson::Value block(rapidjson::kObjectType);
+			block.AddMember("position", leverPos, allocator);
+			block.AddMember("Area", area, allocator);
+
+			leftLeverArray.PushBack(block, allocator);
+		}
+
+		rapidjson::Value leftLever(rapidjson::kObjectType);
+		leftLever.AddMember("leftData", leftLeverArray, allocator);
+
+		document.AddMember("leftLever", leftLever, allocator);
+	}
+
+	if (rightLeverPos.size() != 0 && rightAreaPos.size() != 0)
+	{
+		//右のレバー作成
+		rapidjson::Value rightLeverArray(rapidjson::kArrayType);
+		for (int i = 0; i < rightLeverPos.size(); i++)
+		{
+			rapidjson::Value leverPos(rapidjson::kObjectType);
+			leverPos.AddMember("x", rightLeverPos[i].x, allocator);
+			leverPos.AddMember("y", rightLeverPos[i].y, allocator);
+
+			rapidjson::Value areaPos(rapidjson::kObjectType);
+			areaPos.AddMember("x", rightAreaPos[i].x, allocator);
+			areaPos.AddMember("y", rightAreaPos[i].y, allocator);
+
+			rapidjson::Value areaSize(rapidjson::kObjectType);
+			areaSize.AddMember("width", 30.0f, allocator);
+			areaSize.AddMember("height", 30.0f, allocator);
+
+			rapidjson::Value area(rapidjson::kObjectType);
+			area.AddMember("position", areaPos, allocator);
+			area.AddMember("size", areaSize, allocator);
+
+			rapidjson::Value block(rapidjson::kObjectType);
+			block.AddMember("position", leverPos, allocator);
+			block.AddMember("Area", area, allocator);
+
+			rightLeverArray.PushBack(block, allocator);
+		}
+
+		rapidjson::Value rightLever(rapidjson::kObjectType);
+		rightLever.AddMember("rightData", rightLeverArray, allocator);
+
+		document.AddMember("rightLever", rightLever, allocator);
+	}
 
 	std::string jsonPath = filePath + "tenYenStage.json";
 
@@ -308,60 +707,30 @@ void HelloWorld::onMouseDown(cocos2d::Event* event)
 {
 	EventMouse* e = (EventMouse*)event;
 
-	if (50.0f >= e->getCursorX() || e->getCursorX() >= 310.0f)
-	{
-		return;
-	}
-
-	if (50.0f >= e->getCursorY() || e->getCursorY() >= 610.0f)
-	{
-		return;
-	}
-
-	Vec2 minMaxPos = Vec2(0.0f, 0.0f);
-
-	if (60.0f >= e->getCursorX())
-	{
-		minMaxPos.x = 60.0f;
-	}
-	else if (e->getCursorX() >= 300.0f)
-	{
-		minMaxPos.x = 300.0f;
-	}
-	else
-	{
-		minMaxPos.x = e->getCursorX();
-	}
-
-	if (60.0f >= e->getCursorY())
-	{
-		minMaxPos.y = 60.0f;
-	}
-	else if (e->getCursorY() >= 600.0f)
-	{
-		minMaxPos.y = 600.0f;
-	}
-	else
-	{
-		minMaxPos.y = e->getCursorY();
-	}
+	
 
 	if (e->getMouseButton() == EventMouse::MouseButton::BUTTON_LEFT)
 	{
 		switch (nowMode)
 		{
 		case Mode::Line:
-			this->LineCreateMouseLeft(minMaxPos);
+			this->LineCreateMouseLeft(e->getCursorX(), e->getCursorY());
 			break;
 
 		case Mode::LostHole:
-			this->HoleCreate(minMaxPos, Color4F::YELLOW);
-			modeList.push_back(nowMode);
+			this->HoleCreate(e->getCursorX(), e->getCursorY(), Color4F::YELLOW);
 			break;
 
 		case Mode::GaolHole:
-			this->HoleCreate(minMaxPos, Color4F::RED);
-			modeList.push_back(nowMode);
+			this->HoleCreate(e->getCursorX(), e->getCursorY(), Color4F::RED);
+			break;
+
+		case Mode::LeftLever:
+			this->LeftLeverCreate(e->getCursorX(), e->getCursorY());
+			break;
+
+		case Mode::RightLever:
+			this->RightLeverCreate(e->getCursorX(), e->getCursorY());
 			break;
 
 		default:
@@ -370,7 +739,7 @@ void HelloWorld::onMouseDown(cocos2d::Event* event)
 	}
 	else if (e->getMouseButton() == EventMouse::MouseButton::BUTTON_RIGHT)
 	{
-		this->LineCreateMouseRight(minMaxPos);
+		this->LineCreateMouseRight(e->getCursorX(), e->getCursorY());
 	}
 }
 
@@ -397,7 +766,12 @@ void HelloWorld::onMouseMove(cocos2d::Event* event)
 		drawNode->clear();
 		drawNode->drawCircle(Vec2(e->getCursorX(), e->getCursorY()), holeSize.width * 0.5f, 0.0f, 360, false, 1, 1, Color4F::RED);
 		break;
-
+	case Mode::LeftLever:
+		this->LeftLeverMove(e->getCursorY());
+		break;
+	case Mode::RightLever:
+		this->RightLeverMove(e->getCursorY());
+		break;
 	default:
 		break;
 	}
@@ -414,10 +788,8 @@ void HelloWorld::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::
 		{
 			this->CreateRailDrawCSV(writablePath, railDraw);
 			this->CreateRailDataCSV(writablePath, railData);
-			if (lostHolePos.size() != 0)
-			{
-				this->CreateStageJson(writablePath);
-			}			
+			this->CreateStageJson(writablePath);
+			
 			log(u8"Saveしました");
 		}
 		else
@@ -427,7 +799,7 @@ void HelloWorld::onKeyPressed(cocos2d::EventKeyboard::KeyCode keyCode, cocos2d::
 
 		break;
 	case EventKeyboard::KeyCode::KEY_Z:
-		if (modeList.size() != 0)
+		if (modeList.size() != 0 && !clicked)
 		{
 			this->Cancel(modeList.back());
 		}		
@@ -465,9 +837,25 @@ void HelloWorld::ChangeButtonEvent(cocos2d::Ref * sender, cocos2d::ui::Widget::T
 			break;
 
 		case Mode::GaolHole:
+			changeButton->setTitleText("LeftLeverCreate");
+			nowMode = Mode::LeftLever;
+			drawNode->clear();
+			leverBackSprite->setPosition(Vec2(45.0f, 555.0f));
+			leverSprite->setPosition(Vec2(45.0f, 555.0f));
+			leverBackSprite->setVisible(true);
+			leverSprite->setVisible(true);
+			break;
+		case Mode::LeftLever:
+			changeButton->setTitleText("RightLeverCreate");
+			nowMode = Mode::RightLever;
+			leverBackSprite->setPosition(Vec2(315.0f, 555.0f));
+			leverSprite->setPosition(Vec2(315.0f, 555.0f));
+			break;
+		case Mode::RightLever:
 			changeButton->setTitleText("LineCreate");
 			nowMode = Mode::Line;
-			drawNode->clear();
+			leverBackSprite->setVisible(false);
+			leverSprite->setVisible(false);
 			break;
 		default:
 			break;

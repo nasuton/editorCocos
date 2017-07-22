@@ -13,7 +13,9 @@ private:
 	{
 		Line,
 		LostHole,
-		GaolHole
+		GaolHole,
+		LeftLever,
+		RightLever
 	};
 
 	Mode nowMode;
@@ -50,6 +52,22 @@ private:
 
 	std::vector<int> clickArray;
 
+	cocos2d::Sprite* leverBackSprite;
+
+	cocos2d::Sprite* leverSprite;
+
+	float leverPosY;
+
+	float areaPos;
+
+	std::vector<cocos2d::Vec2> leftLeverPos;
+
+	std::vector<cocos2d::Vec2> leftAreaPos;
+
+	std::vector<cocos2d::Vec2> rightLeverPos;
+
+	std::vector<cocos2d::Vec2> rightAreaPos;
+
 public:
 	HelloWorld();
 	virtual ~HelloWorld();
@@ -68,13 +86,25 @@ private:
 	void Cancel(Mode mode_);
 
 	//ModeがLineCreate時に左クリックされた場合
-	void LineCreateMouseLeft(cocos2d::Vec2 pos);
+	void LineCreateMouseLeft(float cursorX, float cursorY);
 
 	//ModeがLineCreate時に右クリックされた場合
-	void LineCreateMouseRight(cocos2d::Vec2 pos);
+	void LineCreateMouseRight(float cursorX, float cursorY);
 
 	//holeを作る
-	void HoleCreate(cocos2d::Vec2 pos, cocos2d::Color4F cirlceColor);
+	void HoleCreate(float cursorX, float cursorY, cocos2d::Color4F cirlceColor);
+
+	//LeftLeverを作成
+	void LeftLeverCreate(float cursorX, float cursorY);
+
+	//LeftLeverを動かす
+	void LeftLeverMove(float cursorY);
+
+	//RightLeverを作成
+	void RightLeverCreate(float cursorX, float cursorY);
+
+	//RightLeverを動かす
+	void RightLeverMove(float cursorY);
 
 	//実際に線を描画する際のcsvを作成
 	void CreateRailDrawCSV(std::string filePath, keeporder drawData);
