@@ -602,19 +602,22 @@ void HelloWorld::CreateStageJson(std::string filePath)
 	}
 
 	//ÉSÅ[ÉãçÏê¨
-	rapidjson::Value goalHolePos(rapidjson::kObjectType);
-	goalHolePos.AddMember("x", goalPos.x, allocator);
-	goalHolePos.AddMember("y", goalPos.y, allocator);
+	if (goalPos.x != 0.0f && goalPos.y != 0.0f)
+	{
+		rapidjson::Value goalHolePos(rapidjson::kObjectType);
+		goalHolePos.AddMember("x", goalPos.x, allocator);
+		goalHolePos.AddMember("y", goalPos.y, allocator);
 
-	rapidjson::Value goalHoleSize(rapidjson::kObjectType);
-	goalHoleSize.AddMember("width", holeSize.width, allocator);
-	goalHoleSize.AddMember("height", holeSize.height, allocator);
+		rapidjson::Value goalHoleSize(rapidjson::kObjectType);
+		goalHoleSize.AddMember("width", holeSize.width, allocator);
+		goalHoleSize.AddMember("height", holeSize.height, allocator);
 
-	rapidjson::Value goalHole(rapidjson::kObjectType);
-	goalHole.AddMember("position", goalHolePos, allocator);
-	goalHole.AddMember("size", goalHoleSize, allocator);
+		rapidjson::Value goalHole(rapidjson::kObjectType);
+		goalHole.AddMember("position", goalHolePos, allocator);
+		goalHole.AddMember("size", goalHoleSize, allocator);
 
-	document.AddMember("goalHole", goalHole, allocator);
+		document.AddMember("goalHole", goalHole, allocator);
+	}
 
 	//ç∂ÉåÉoÅ[çÏê¨
 	if (leftLeverPos.size() != 0 && leftAreaPos.size() != 0)
