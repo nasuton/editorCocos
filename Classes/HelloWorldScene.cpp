@@ -85,7 +85,7 @@ bool HelloWorld::init()
 
 	railData =
 	{
-		std::make_pair(Vec2(60, 300), 0),
+		std::make_pair(Vec2(60, 600), 0),
 		std::make_pair(Vec2(60, 60), 0),
 		std::make_pair(Vec2(300, 60), 0),
 		std::make_pair(Vec2(300, 600), 0),
